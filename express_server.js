@@ -10,9 +10,21 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+// const id = {
+// // Route path: /users/:userId/books/:bookId
+// // Request URL: http://localhost:3000/users/34/books/8989
+// reqParam: { urlDatabase: "34", "bookId": "8989" }
+// };
+
 app.get("/urls", (req, res) => {
   let templateVars = {urls: urlDatabase};
   res.render("urls_index", templateVars);
+});
+
+app.get("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL
+  let templateVars = { shortURL: /*req.params.*/shortURL, longURL: urlDatabase[shortURL] }
+  res.render("urls_show", templateVars);
 });
 
 app.get("/", (req, res) => {

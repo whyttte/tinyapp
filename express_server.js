@@ -30,17 +30,13 @@ app.use(bodyParser.urlencoded({extended: true}));
 // reqParam: { urlDatabase: "34", "bookId": "8989" }
 // };
 
+app.get("/urls.json", (req, res) => {
+  res.json("urlDatabase");
+});
+
 app.get("/urls", (req, res) => {
   let templateVars = {urls: urlDatabase};
   res.render("urls_index", templateVars);
-});
-
-app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json("urlDatabase");
 });
 
 app.post("/urls", (req, res) => {
@@ -51,12 +47,15 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/:${shortURL}`);         // Respond with 'Ok' (we will replace this)
 });
 
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL
   let templateVars = { shortURL: /*req.params.*/shortURL, longURL: urlDatabase[shortURL] }
   res.render("urls_show", templateVars);
 });
-
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -64,15 +63,27 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-app.post('/urls/:shortURL/delete', (req, res) => {
-  const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect('/urls');
+
+
+app.post("/urls/:shortURL?/update", (req, res) => {
+  const shortURL = req.params.shortURL
+  console.log(`longurl: ${JSON.stringify(req.body)}`)
+  urlDatabase[shortURL] = req.body.longURL
+  let templateVars = {urls: urlDatabase}
+  res.render("urls_index", templateVars);
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL
+  delete urlDatabase[shortURL]
+  res.redirect(`/urls`);
 });
 
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
+
+
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");

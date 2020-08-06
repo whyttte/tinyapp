@@ -1,12 +1,18 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const bcrypt = require('bcrypt');
+// const { request } = require("express");
 const cookieSession = require('cookie-session');
+
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
-
+app.use(cookieSession({
+  name: 'session',
+  keys: ['no-idea-what'],
+  }));
 
 let urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -15,23 +21,16 @@ let urlDatabase = {
 
 let users = {
   'favour' : {
-    username: 'favour',
+    email: 'favour',
     email: 'fogboruche@yahoo.com',
     password: 'none'
   },
 };
 
-const cookieParser = require('cookie-parser');
-const { request } = require("express");
-app.use(cookieParser());
-// app.use(cookieSession({
-//   name: 'session',
-//   keys: ['no idea what this is'],
-// }));
-function authorisedUsers(username) {
+function authorisedUsers(email) {
   let authorisedUserUrls = {};
   for(let url in urlDatabase) {
-    if (urlDatabase[url][username] === username) {
+    if (urlDatabase[url][email] === email) {
       authorisedUserUrls[url] = urlDatabase[url];
     }
   }
@@ -53,7 +52,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  const user = users[req.session.username];
+  const user = users[req.session.email];
   if (user) {
     res.redirect('/urls');
   } else {
@@ -61,15 +60,38 @@ app.get("/", (req, res) => {
   }
 });
 
+app.get('/login', (req, res) => {
+  let templateVars = {
+    user: users[req.session.email],
+  };
+  if (templateVars.user) {
+    res.redirect('/urls');
+  } else {
+    res.render('login', templateVars);
+  }
+});
+
+app.get('/register', (req, res) => {
+  let templateVars = {
+    user: users[req.session.email],
+  };
+  if (templateVars.user) {
+    res.redirect('/urls');
+  } else {
+    res.render('register', templateVars);
+  }
+});
+
 app.get("/urls", (req, res) => {
-  const username = req.session.username
-  let templateVars = {urlDatabase: authorisedUserUrls(username), user: users[username]};
+  const email = req.session.email
+  let templateVars = {user: users[email], urls: urlDatabase}
+  // let templateVars = {urlDatabase: authorisedUserUrls(email), user: users[email]};
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = {user: users[req.session.username]};
-  if (templateVars[user]) {
+  let templateVars = {user: users[req.session.email]};
+  if (templateVars.user) {
     res.render("urls_new", templateVars);
   } else {
   res.redirect("/login");
@@ -77,27 +99,27 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const {username} = req.session;
+  const {email} = req.session;
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL]) {
-    if (urlDatabase[shortURL].username === username) {
+    // if (urlDatabase[shortURL].email === email) {
       let {longURL, visits, visited, uVisitors} = urlDatabase[req.params.shortURL]; // verify
-      let templateVars = {shortURL, longURL, visits, visited, uVisitors, user: users[username]};
+      let templateVars = {shortURL, longURL, visits, visited, uVisitors, user: users[email]};
       res.render("urls_show", templateVars);
       return;
-    } else if (username) {
-        let templateVars = {user: users[req.session.username], message: 'You can only view your shortened URLs'};
-        res.render("Error", templateVars);
+    } else if (email) {
+        let templateVars = {user: users[req.session.email], message: 'You can only view your shortened URLs'};
+        res.render("error", templateVars);
         return;
     } else {
-      let templateVars = {user: users[req.session.username], message: 'Please login in to view your shortened URLs'};
-      res.render("Error", templateVars);
+      let templateVars = {user: users[req.session.email], message: 'Please login in to view your shortened URLs'};
+      res.render("error", templateVars);
     }
-  } else {
-    let templateVars = {user: users[req.session.username], message: `Couldn't fing your URLs`};
-    res.render("Error", templateVars);
-    return;
-  }
+  // } else {
+  //   let templateVars = {user: users[req.session.email], message: `Couldn't fing your URLs`};
+  //   res.render("error", templateVars);
+  //   return;
+  // }
 }); 
 
 app.get("/u/:shortURL", (req, res) => {
@@ -114,28 +136,6 @@ app.get("/u/:shortURL", (req, res) => {
 
 
 
-app.get('/register', (req, res) => {
-  let templateVars = {
-    user: users[req.session.username],
-  };
-  if (templateVars.user) {
-    res.redirect('/urls');
-  } else {
-    res.render('register', templateVars);
-  }
-});
-
-app.get('/login', (req, res) => {
-  let templateVars = {
-    user: users[request.session.username],
-  };
-  if (templateVars.user) {
-    res.redirect('/urls');
-  } else {
-    res.render('login', templateVars);
-  }
-});
-
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
@@ -144,32 +144,33 @@ app.post('/logout', (req, res) => {
 
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
+  console.log(email, password)
   if (email && password) {
     for (let key in users) {
       if (users[key].email === email) {
+        console.log(users[key].email)
         let templateVars = {
-          user: users[req.session.username],
+          user: undefined,
           message: 'Email Exists!, Sign in Instead'};
-        res.render('Error', templateVars);
+        res.render('error', templateVars);
         return;
       }
     }
-    const randomId = generateRandomString(8);
+    // const randomId = generateRandomString(8);
     const newUser = {
-      username,
       email,
       password: bcrypt.hashSync(password, 8),
     };
-    users[username] = newUser;
-    req.session.username = username;
+    users[email] = newUser;
+    req.session.email = email;
     res.redirect('/urls');
     return;
   } else {
     let templateVars = {
-      user: users[req.session.username],
+      user: undefined,
       message: 'Please put a valid email adress and password',
     };
-    res.render('Error', templateVars);
+    res.render('error', templateVars);
     return;
   }
 });
@@ -178,47 +179,47 @@ app.post('/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     let templateVars = {
-      user: users[req.session.username],
+      user: users[req.session.email],
       message: 'Email or password not found',
     };
     res.render('error', templateVars);
     return;
   } else {
-    let Found = false;
+    let found = false;
     for (let user in users) {
       if (users[user].email === email) {
-        Found = true;
+        found = true;
         if (bcrypt.compareSync(password, users[user].password)) {
-          req.session.username = users[user].username;
+          req.session.email = users[user].email;
           res.redirect('/urls');
         } else {
           let templateVars = {
-            user: users[req.session.username],
+            user: users[req.session.email],
             message: 'Wrong password',
           };
-          res.render('Error', templateVars);
+          res.render('error', templateVars);
           return;
         }
       }
     }
-    if (!Found) {
+    if (!found) {
       let templateVars = {
-        user: users[request.session.username],
+        user: users[req.session.email],
         message: 'Email not found',
       };
-      res.render('Error', templateVars);
+      res.render('error', templateVars);
       return;
     }
   }
 });
 
 app.post('/urls', (req, res) => {
-  if (!req.session.username) {
+  if (!req.session.email) {
     let templateVars = {
-      user: users[req.session.username],
+      user: undefined,
       message: 'Please log in to submit a URL',
     };
-    res.render('Error', templateVars);
+    res.render('error', templateVars);
   } else {
     let shortURL = generateRandomString(6);
     let longURL = req.body.longURL;
@@ -227,7 +228,7 @@ app.post('/urls', (req, res) => {
         visits: [],
         shortURL,
         longURL,
-        usernmae: req.session.username,
+        usernmae: req.session.email,
         visited: 0,
         uVisitors: 0}
       urlDatabase[shortURL] = newUrl;
@@ -238,81 +239,28 @@ app.post('/urls', (req, res) => {
   }
 });
 
-app.delete('/urls/:id/delete', (req, res) => {
-  const shortUrl = req.params.shortURL;
-  const username = req.session.username;
-  if (!username) {
+app.post('/urls/:id/delete', (req, res) => {
+  const shortUrl = req.params.id;
+  const email = req.session.email;
+  if (!email) {
     let templateVars = {
-      user: users[req.session.username],
+      user: undefined,
       message: 'Please log in to delete your URL',
     };
     res.render('error', templateVars);
-  } else if (urlDatabase[shortUrl].username === username) {
-      if (!urlDatabase[shortUrl]) {
-        let templateVars = {
-          user: users[req.session.username],
-          message: 'You may only delete your own URLs'}
-          res.render('Error', templateVars);
-      } 
-    delete urlDatabase[shortUrl];
-    }
-    res.redirect('/urls');
-});
-
-
-
-app.get('/urls/new', (request, response) => {
-  let templateVars = {
-    user: users[request.session.user_id],
-  };
-  if (templateVars.user) {
-    response.render('urls_new', templateVars);
+  } else if (urlDatabase[shortUrl].email !== email) {
+      let templateVars = {
+      user: users[req.session.email],
+      message: 'You may only delete your own URLs'}
+      res.render('error', templateVars);
   } else {
-    response.redirect('/login');
+    delete urlDatabase[shortUrl];
   }
+  res.redirect('/urls');
 });
 
 
 
-// app.post('/logout', (req, res) => {
-//   res.clearCookie('username');
-//   res.redirect('/urls');
-// });
-
-// app.post("/urls", (req, res) => {
-//   let shortURL = generateRandomString();
-//   let longURL = req.body.longURL;
-//   urlDatabase[shortURL] = longURL
-//   // console.log(req.body);  // Log the POST request body to the console
-//   res.redirect(`/urls/:${shortURL}`);         // Respond with 'Ok' (we will replace this)
-// });
-
-
-
-
-
-
-
-
-
-// app.post("/urls/:shortURL/update", (req, res) => {
-//   const shortURL = req.params.shortURL
-//   urlDatabase[shortURL] = req.body.longURL
-//   let templateVars = {urls: urlDatabase}
-//   res.render("urls_index", templateVars);
-// });
-
-// app.post("/urls/:shortURL/delete", (req, res) => {
-//   const shortURL = req.params.shortURL
-//   if (urlDatabase[shortUrl]) {
-//     delete urlDatabase[shortURL];
-//   }
-//   res.redirect(`/urls`);
-// });
-
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");

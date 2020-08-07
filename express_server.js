@@ -21,7 +21,6 @@ let urlDatabase = {
 
 let users = {
   'favour' : {
-    email: 'favour',
     email: 'fogboruche@yahoo.com',
     password: 'none'
   },
@@ -102,24 +101,39 @@ app.get("/urls/:shortURL", (req, res) => {
   const {email} = req.session;
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL]) {
-    // if (urlDatabase[shortURL].email === email) {
-      let {longURL, visits, visited, uVisitors} = urlDatabase[req.params.shortURL]; // verify
-      let templateVars = {shortURL, longURL, visits, visited, uVisitors, user: users[email]};
-      res.render("urls_show", templateVars);
-      return;
-    } else if (email) {
-        let templateVars = {user: users[req.session.email], message: 'You can only view your shortened URLs'};
-        res.render("error", templateVars);
-        return;
+    if (!email) {
+      res.redirect('/register')
     } else {
-      let templateVars = {user: users[req.session.email], message: 'Please login in to view your shortened URLs'};
-      res.render("error", templateVars);
+      if (urlDatabase[shortURL].email === email) {
+        let {longURL, visits, visited, uVisitors} = urlDatabase[req.params.shortURL]; //
+        let templateVars = {user: users[email], longURL: longURL, shortURL: shortURL};
+        res.render("urls_show", templateVars);
+      } else {
+        // if user is logged in but don't own the url
+        let templateVars = {user: users[req.session.email], message: 'You can only view your shortened URLs'};
+        console.log(email, urlDatabase[shortURL].email ) 
+        console.log(urlDatabase)
+        res.render("error", templateVars); //checking!
+        return;
+      }
     }
-  // } else {
-  //   let templateVars = {user: users[req.session.email], message: `Couldn't fing your URLs`};
-  //   res.render("error", templateVars);
-  //   return;
-  // }
+  //     let {longURL, visits, visited, uVisitors} = urlDatabase[req.params.shortURL]; // verify
+  //     let templateVars = {shortURL, longURL, visits, visited, uVisitors, user: users[email]};
+  //     res.render("urls_show", templateVars);
+  //     return;
+  //   } else if (email) {
+  //       let templateVars = {user: users[req.session.email], message: 'You can only view your shortened URLs'};
+  //       res.render("error", templateVars);
+  //       return;
+  //   } else {
+  //     let templateVars = {user: users[req.session.email], message: 'Please login in to view your shortened URLs'};
+  //     res.render("error", templateVars);
+  //   }
+  // // } else {
+  // //   let templateVars = {user: users[req.session.email], message: `Couldn't fing your URLs`};
+  // //   res.render("error", templateVars);
+  // //   return;
+  }
 }); 
 
 app.get("/u/:shortURL", (req, res) => {
@@ -168,7 +182,7 @@ app.post('/register', (req, res) => {
   } else {
     let templateVars = {
       user: undefined,
-      message: 'Please put a valid email adress and password',
+      message: 'Please put a valid email address and password',
     };
     res.render('error', templateVars);
     return;
@@ -228,15 +242,33 @@ app.post('/urls', (req, res) => {
         visits: [],
         shortURL,
         longURL,
-        usernmae: req.session.email,
+        email: req.session.email,
         visited: 0,
         uVisitors: 0}
       urlDatabase[shortURL] = newUrl;
+      console.log("urlDatabase is :", urlDatabase)
       res.redirect(`/urls/${shortURL}`);
     } else {
       res.redirect('/urls');
     }
   }
+});
+
+app.post('/urls/:shortURL', (req, res) => {
+  const email = req.session.email;
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longURL;
+  if (urlDatabase[shortURL]) { //to fix
+  //     urlDatabase[shortURL] = longURL;
+      res.redirect('/urls');
+    } else {
+      let templateVars = {
+        user: undefined,
+        message: 'Please put a valid email address and password',
+      };
+      res.render('error', templateVars);
+      return;
+    }
 });
 
 app.post('/urls/:id/delete', (req, res) => {
@@ -259,6 +291,27 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 });
 
+app.post('/urls/:id/edit', (req, res) => {
+  console.log("got to '/urls/:id/edit")
+  const shortUrl = req.params.id;
+  const email = req.session.email;
+  if (!email) {
+    let templateVars = {
+      user: undefined,
+      message: 'Please log in to edit your URL',
+    };
+    res.render('error', templateVars);
+  } else if (urlDatabase[shortUrl].email !== email) {
+      let templateVars = {
+      user: users[req.session.email],
+      message: 'You may only edit your own URLs'}
+      res.render('error', templateVars);
+  }
+  // } else {
+  //   delete urlDatabase[shortUrl];
+  // }
+  res.redirect('/urls');
+});
 
 
 

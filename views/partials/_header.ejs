@@ -11,7 +11,7 @@
         <% if(user) { %>
           <form action="/logout" method="post" class='form-inline'>
             <p><%= user.email %></p>
-            <button type='submit' class='btn btn-link'>Logout"/button>
+            <button type='submit' class='btn btn-link'>Logout</button>
           </form>
         <% } else { %>
           <li><a href='/register'>Register</a></li>

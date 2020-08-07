@@ -31,7 +31,7 @@
             <td>
               <a href="/u/<%= url %>"><%= url %></a>
             </td>
-            <td><%= urls[url] %></td>
+            <td><%= urls[url]["longURL"]%></td>
             <td>
               <form method="get" action=<%= "/urls/"+ url %>>
                 <button type="submit" class="btn btn-secondary">Edit</button>

@@ -6,6 +6,7 @@
   <title>URL - TinyApp Example</title>
 </head>
 <%- include('partials/_header') %>
+<%- include main.css %>
 <body>
   <div class="card text-center">
       <div class="card-header"></div>
@@ -14,8 +15,8 @@
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
         <form method="post" action=<%= '/urls/'+shortURL %>>
           <label for='longURL'>New longURL</label>
-          <input class = 'form-control' type = 'text' name = 'longURL' value =<%= `${longURL}` %>>
-          <button type="submit" class="btn btn-primary">Submit</button>
+          <input class = 'form-control' type = 'text' name = 'longURL' id =<%= longURL %>/>
+          <button type="submit" class="btn btn-primary">Update</button>
         </form>
       </div>
     <div class="card-footer text-muted"></div>

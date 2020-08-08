@@ -15,8 +15,8 @@ app.use(cookieSession({
   }));
 
   const urlDatabase = {
-    b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-    i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
+    b6UTxQ: { longURL: "https://www.tsn.ca", email: "aJ48lW" },
+    i3BoGr: { longURL: "https://www.google.ca", email: "aJ48lW" }
   };
 
 let users = {
@@ -26,14 +26,14 @@ let users = {
   },
 };
 
-function authorisedUsers(email) {
-  let authorisedUserUrls = {};
-  for(let url in urlDatabase) {
-    if (urlDatabase[url][email] === email) {
-      authorisedUserUrls[url] = urlDatabase[url];
+function urlsForUser(email) {
+  const userUrls = {};
+  for (let url in urlDatabase) {
+    if (urlDatabase[url].email === email) {
+      userUrls[url] = urlDatabase[url];
     }
   }
-  return authorisedUserUrls
+  return userUrls;
 }
 
 
@@ -83,7 +83,7 @@ app.get('/register', (req, res) => {
 
 app.get("/urls", (req, res) => {
   const email = req.session.email
-  let templateVars = {user: users[email], urls: urlDatabase}
+  let templateVars = {user: users[email], urlDatabase: urlsForUser(email)}
   // let templateVars = {urlDatabase: authorisedUserUrls(email), user: users[email]};
   res.render("urls_index", templateVars);
 });
@@ -140,26 +140,19 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  console.log(shortURL, "line 142")
   // console.log(Object.keys(urlDatabase[shortURL]) , "is line 143")
   let shortURLs = Object.keys(urlDatabase);
-  console.log(shortURLs);
-  console.log(shortURLs.includes(shortURL));
   if (shortURLs.includes(shortURL)) {
-    console.log(urlDatabase[shortURL], 'line 149')
     const longURL = urlDatabase[shortURL]["longURL"]
-    console.log(longURL)
     if (longURL.indexOf("http://") === 0 ) {
       res.redirect(longURL);
     } else {
       res.redirect("http://" + longURL);
     }
   } else {
-    console.log('HERE TOO')
     res.redirect('/urls');
   }
 });
-//yet to finish
 
 
 

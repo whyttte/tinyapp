@@ -6,16 +6,20 @@
 
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+  <link rel="href /main.css">
   <title>TinyApp</title>
 </head>
 <%- include('partials/_header') %>
 <body>
   <main style="margin: 1em;">
-    <% if (!user) { %>
-    <h3>Please <a href='/login'>login</a> or <a href='/register'>register</a> to create a short URL!</h3>
+    <link rel="href /main.css">
+    <% if (Object.keys(urlDatabase).length === 0 && urlDatabase.constructor === Object) { %>
+      <% if (!user) { %>
+       <h3>Please <a href='/login'>login</a> or <a href='/register'>register</a> to create a short URL!</h3>
+      <% } else { %>
+      <h2>It seems you have no shortened URL. You can<a href='/urls/new'>shorten</a> one now!</h2>
+    <% } %>
     <% } else { %>
-      <h2>It seems you have no shortened URL. Go to <a href='/urls/new'>shorten</a>one now!</h2>
-      <% } %>
     <table class="table">
       <thead>
         <tr>
@@ -26,12 +30,12 @@
         </tr>
       </thead>
       <tbody>
-        <% for(let url in urls) { %>
+        <% for(let url in urlDatabase) { %>
           <tr>
             <td>
               <a href="/u/<%= url %>"><%= url %></a>
             </td>
-            <td><%= urls[url]["longURL"]%></td>
+            <td><%= urlDatabase[url]["longURL"]%></td>
             <td>
               <form method="get" action=<%= "/urls/"+ url %>>
                 <button type="submit" class="btn btn-secondary">Edit</button>
@@ -45,6 +49,7 @@
             </td>
           </tr>
         <% } %>
+    <% } %>
       </tbody>
     </table>
   </main>

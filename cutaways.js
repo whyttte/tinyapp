@@ -98,3 +98,49 @@ app.post('/urls', (req, res) => {
     }
   }
 });
+
+as
+
+// PLEASE DON'T CHANGE
+
+
+app.get("/urls/:shortURL", (req, res) => {
+  const {email} = req.session;
+  const shortURL = req.params.shortURL;
+  if (urlDatabase[shortURL]) {
+    if (!email) {
+      res.redirect('/register')
+    } else {
+      if (urlDatabase[shortURL].email === email) {
+        let longURL = urlDatabase[shortURL]["longURL"]
+        // let {longURL/* visits, visited, uVisitors*/} = urlDatabase[req.params.shortURL]; //
+        console.log(longURL + "to verify")
+        let templateVars = {user: users[email], longURL: longURL, shortURL: shortURL};
+        res.render("urls_show", templateVars);
+      } else {
+        // if user is logged in but don't own the url
+        let templateVars = {user: users[req.session.email], message: 'You can only view your shortened URLs'};
+        // console.log(email, urlDatabase[shortURL].email ) 
+        // console.log(urlDatabase)
+        res.render("error", templateVars); //checking!
+        return;
+      }
+    }
+  //     let {longURL, visits, visited, uVisitors} = urlDatabase[req.params.shortURL]; // verify
+  //     let templateVars = {shortURL, longURL, visits, visited, uVisitors, user: users[email]};
+  //     res.render("urls_show", templateVars);
+  //     return;
+  //   } else if (email) {
+  //       let templateVars = {user: users[req.session.email], message: 'You can only view your shortened URLs'};
+  //       res.render("error", templateVars);
+  //       return;
+  //   } else {
+  //     let templateVars = {user: users[req.session.email], message: 'Please login in to view your shortened URLs'};
+  //     res.render("error", templateVars);
+  //   }
+  // // } else {
+  // //   let templateVars = {user: users[req.session.email], message: `Couldn't fing your URLs`};
+  // //   res.render("error", templateVars);
+  // //   return;
+  }
+}); 

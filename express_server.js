@@ -1,7 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
-// const { request } = require("express");
 const cookieSession = require('cookie-session');
 
 const app = express();
@@ -37,6 +36,7 @@ function urlsForUser(email) {
 }
 
 
+
 function generateRandomString(num) {
   let alphaNumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let randomGen = ''
@@ -45,6 +45,8 @@ function generateRandomString(num) {
   }
   return randomGen;
 }
+
+
 
 app.get("/urls.json", (req, res) => {
   res.json("urlDatabase");
@@ -84,7 +86,6 @@ app.get('/register', (req, res) => {
 app.get("/urls", (req, res) => {
   const email = req.session.email
   let templateVars = {user: users[email], urlDatabase: urlsForUser(email)}
-  // let templateVars = {urlDatabase: authorisedUserUrls(email), user: users[email]};
   res.render("urls_index", templateVars);
 });
 
@@ -106,41 +107,23 @@ app.get("/urls/:shortURL", (req, res) => {
     } else {
       if (urlDatabase[shortURL].email === email) {
         let longURL = urlDatabase[shortURL]["longURL"]
-        // let {longURL/* visits, visited, uVisitors*/} = urlDatabase[req.params.shortURL]; //
         console.log(longURL + "to verify")
         let templateVars = {user: users[email], longURL: longURL, shortURL: shortURL};
         res.render("urls_show", templateVars);
       } else {
         // if user is logged in but don't own the url
         let templateVars = {user: users[req.session.email], message: 'You can only view your shortened URLs'};
-        // console.log(email, urlDatabase[shortURL].email ) 
-        // console.log(urlDatabase)
+
         res.render("error", templateVars); //checking!
         return;
       }
     }
-  //     let {longURL, visits, visited, uVisitors} = urlDatabase[req.params.shortURL]; // verify
-  //     let templateVars = {shortURL, longURL, visits, visited, uVisitors, user: users[email]};
-  //     res.render("urls_show", templateVars);
-  //     return;
-  //   } else if (email) {
-  //       let templateVars = {user: users[req.session.email], message: 'You can only view your shortened URLs'};
-  //       res.render("error", templateVars);
-  //       return;
-  //   } else {
-  //     let templateVars = {user: users[req.session.email], message: 'Please login in to view your shortened URLs'};
-  //     res.render("error", templateVars);
-  //   }
-  // // } else {
-  // //   let templateVars = {user: users[req.session.email], message: `Couldn't fing your URLs`};
-  // //   res.render("error", templateVars);
-  // //   return;
+  
   }
 }); 
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  // console.log(Object.keys(urlDatabase[shortURL]) , "is line 143")
   let shortURLs = Object.keys(urlDatabase);
   if (shortURLs.includes(shortURL)) {
     const longURL = urlDatabase[shortURL]["longURL"]
@@ -165,19 +148,16 @@ app.post('/logout', (req, res) => {
 
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
-  // console.log(email, password)
   if (email && password) {
     for (let key in users) {
       if (users[key].email === email) {
-        console.log(users[key].email)
         let templateVars = {
           user: undefined,
           message: 'Email Exists!, Sign in Instead'};
-        res.render('error', templateVars);
+        res.render("error", templateVars);
         return;
       }
     }
-    // const randomId = generateRandomString(8);
     const newUser = {
       email,
       password: bcrypt.hashSync(password, 8),
@@ -246,13 +226,10 @@ app.post('/urls', (req, res) => {
     let longURL = req.body.longURL;
     if (longURL.length >= 6) {
       const newUrl = {
-        visits: [],
         shortURL: shortURL,
         longURL: longURL,
-        email: req.session.email,
-        visited: 0,
-        uVisitors: 0}
-      urlDatabase[shortURL] = newUrl;
+        email: req.session.email,}
+        urlDatabase[shortURL] = newUrl;
       console.log("urlDatabase is :", longURL)
       res.redirect(`/urls`);
     } else {
@@ -267,7 +244,6 @@ app.post('/urls/:shortURL', (req, res) => {
   let longURL = req.body.longURL;
   if (urlDatabase[shortURL]) { //to fix
     urlDatabase[shortURL]["longURL"] = longURL;
-    // console.log(urlDatabase[shortURL])
       res.redirect('/urls');
     } else {
       let templateVars = {

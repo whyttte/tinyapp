@@ -205,7 +205,7 @@ app.post('/login', (req, res) => {
     }
     if (!found) {
       let templateVars = {
-        user: users[req.session.email],
+        user: null,
         message: 'Email not found',
       };
       res.render('error', templateVars);
@@ -217,7 +217,7 @@ app.post('/login', (req, res) => {
 app.post('/urls', (req, res) => {
   if (!req.session.email) {
     let templateVars = {
-      user: undefined,
+      user: null,
       message: 'Please log in to submit a URL',
     };
     res.render('error', templateVars);
@@ -239,16 +239,16 @@ app.post('/urls', (req, res) => {
 });
 
 app.post('/urls/:shortURL', (req, res) => {
-  const email = req.session.email;
+  // const email = req.session.email;
   const shortURL = req.params.shortURL;
   let longURL = req.body.longURL;
   if (urlDatabase[shortURL]) { //to fix
-    urlDatabase[shortURL]["longURL"] = longURL;
+    urlDatabase[shortURL].longURL = longURL;
       res.redirect('/urls');
     } else {
       let templateVars = {
-        user: undefined,
-        message: 'Please put a valid email address and password',
+        user: null,
+        message: 'No url found',
       };
       res.render('error', templateVars);
       return;
@@ -260,7 +260,7 @@ app.post('/urls/:id/delete', (req, res) => {
   const email = req.session.email;
   if (!email) {
     let templateVars = {
-      user: undefined,
+      user: null,
       message: 'Please log in to delete your URL',
     };
     res.render('error', templateVars);
